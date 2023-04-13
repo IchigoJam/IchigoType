@@ -1,0 +1,178 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>IchigoType2</title>
+</head>
+<body>
+
+<div class="container">
+  <div id="timer"></div>
+  <div id="cnt"></div>
+</div>
+
+<div class="typingContainer">
+  <p id="answer"></p>
+  <p id="target"></p>
+  <p id="result"></p>
+  <p id="restart"></p>
+</div>
+
+<footer>
+  <p>IchigoType2</p>
+  <p>ランダムに出題される20のIchigoJam BASICのコマンド例を早打ちで答えるタイピングゲーム。</p>
+  <p>クリックの替わりにエンターで進められます。ESCキーでやり直し可能。</p>
+  <p>DATA: <a href=https://github.com/ichigojam/doc/>IchigoJam BASIC リファレンス CSV</a></p>
+  <p>FONT: <a href=https://github.com/fu-sen/ichigojam-font>IchigoJam FONT</a> CC BY <a href=https://ichigojam.net/>IchigoJam</a> / <a href=https://15jamrecipe.jimdofree.com/>🎈 BALLOON | FU-SEN</a></p>
+  <p>App: <a href=https://github.com/ichigojam/IchigoType/>IchigoType</a> by <a href=https://fukuno.jig.jp/3913>@taisukef</a> - forked from "<a href=https://github.com/takerucam/TypingGame>TypingGame</a>"</p>
+</footer>
+
+<script type="module">
+import { CSV } from "https://code4sabae.github.io/js/CSV.js";
+import { rnd } from "https://js.sabae.cc/rnd.js";
+import { sleep } from "https://js.sabae.cc/sleep.js";
+import { shuffle } from "https://js.sabae.cc/shuffle.js";
+import { waitClick, waitClickOrEnter, waitKeyDown } from "https://code4fukui.github.io/CityTypingGame/domutil.js";
+import { Timer } from "https://code4fukui.github.io/CityTypingGame/Timer.js";
+import { isFinished } from "https://code4fukui.github.io/promiseutil/promiseutil.js";
+
+const url = "https://ichigojam.github.io/doc/IchigoJam-BASIC-command-list.csv";
+const words = await CSV.fetchJSON(url);
+console.log(words);
+const wcnt = 20; // Math.min(words.length, document.location.hash.substring(1) || 20);
+
+for (;;) {
+  target.textContent = "Click to Start!";
+  cnt.textContent = `0/${wcnt}`;
+  const t = new Timer(timer);
+  await waitClickOrEnter(target);
+  shuffle(words);
+  t.start();
+  let escflg = false;
+  A: for (let i = 0; i < wcnt; i++) {
+    const w = words[i];
+    const word = w["https://sabae.cc/#example"];
+    target.innerHTML = w["schema:name"] + "<br>" + w["schema:description@ja"];
+    answer.textContent = word;
+    let sayp = null;
+    for (let i = 0; i < word.length; i++) {
+      for (;;) {
+        const c = await waitKeyDown();
+        if (c == "Escape") {
+          escflg = true;
+          break A;
+        }
+        const cc = c.toUpperCase();
+        if (word[i].toUpperCase() == cc) {
+          break;
+        //} else if (word[i] == " " && word[i + 1] == cc) { // スペーススキップ可能
+        //  i++;
+        //  break;
+        } else if (c != "Shift" && c != "Meta") {
+          //answer.innerHTML = word.substring(0, i) + `<span style="color:red">${word[i]}</span>` + "_".repeat(word.length - i - 1);
+          //answer.innerHTML = "_".repeat(i) + `<span style="color:red">${word[i]}</span>` + word.substring(i + 1);
+        }
+      }
+      answer.textContent = "_".repeat(i + 1) + word.substring(i + 1);
+      //answer.textContent = word.substring(0, i + 1) + "_".repeat(word.length - i - 1);
+    }
+    cnt.textContent = `${i + 1}/${wcnt}`;
+  }
+  t.stop();
+  if (escflg) {
+    result.textContent = "";
+  } else {
+    result.textContent = "Congratulations!!";
+    //say("Congratulations", "en-US");
+  }
+  restart.textContent = "もう一度挑戦する";
+  await waitClickOrEnter(restart);
+  result.textContent = restart.textContent = target.textContent = "";
+}
+</script>
+
+<style>
+body {
+  font-family: "Courier New", monospace;
+  font-size: 14px;
+  background: #eee;
+}
+
+.container {
+  margin: 20px auto;
+  width: 270px;
+  background: white;
+  padding: 15px;
+  text-align: center;
+}
+
+footer {
+  text-align: center;
+  font-size: 85%;
+  margin: 20px auto;
+  padding: 15px;
+  text-align: center;
+}
+footer a {
+  color: gray !important;
+}
+
+#timer {
+  background: #ddd;
+  height: 120px;
+  line-height: 120px;
+  font-size: 40px;
+  margin-bottom: 15px;
+}
+
+.button {
+  width: 80px;
+  height: 45px;
+  line-height: 45px;
+  background: #ddd;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+}
+
+.inactive {
+  opacity: 0.6;
+}
+
+.typingContainer {
+  /* display: flex;
+  flex-direction: column;
+  align-items: center; */
+  text-align: center;
+}
+
+#target {
+  font-size: 2.5vw;
+  letter-spacing: 0.1em;
+}
+@font-face {
+  font-family: "ichigojam";
+  font-style: normal;
+  font-weight: 400;
+  src: local('IchigoJam-1.4'), local('IchigoJam-1.4-Regular'), url("https://cdn.jsdelivr.net/gh/fu-sen/ichigojam-font@20190814/IchigoJam-1.4.woff") format('woff');
+}
+#answer {
+  font-family: 'ichigojam';
+  font-size: 4vw;
+  line-height: 1.1em;
+  background-color: black;
+  color: white;
+  padding: .3em;
+  display: inline-block;
+  /* letter-spacing: 0.1em; */
+}
+
+.cursor {
+  cursor: pointer;
+}
+
+#result {
+  word-break: break-all;
+  font-size: 5vw;
+}
+</style>
+
+</body>
+</html>
